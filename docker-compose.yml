@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.custom
+    ports:
+      - "8080:80"
+    environment:
+      - SERVER_HOST=recorder
+      - SERVER_PORT=8083
+    volumes:
+      - ./public/config/config.js:/usr/share/nginx/html/config/config.js
+    depends_on:
+      - recorder
+    networks:
+      - owntracks-net
+
+  mqtt:
+    image: eclipse-mosquitto:latest
+    ports:
+      - "1884:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - owntracks-net
+
+  recorder:
+    image: owntracks/recorder:latest
+    ports:
+      - "8083:8083"
+    environment:
+      - OTR_HOST=mqtt
+    volumes:
+      - recorder-store:/store
+    depends_on:
+      - mqtt
+    networks:
+      - owntracks-net
+
+volumes:
+  recorder-store:
+
+networks:
+  owntracks-net:
+    driver: bridge
