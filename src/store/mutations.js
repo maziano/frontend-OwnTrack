@@ -14,7 +14,7 @@ export default {
     state.devices = devices;
   },
   [types.SET_LAST_LOCATIONS](state, lastLocations) {
-    state.lastLocations = lastLocations;
+    state.lastLocations = Array.isArray(lastLocations) ? lastLocations : [];
   },
   [types.SET_LOCATION_HISTORY](state, locationHistory) {
     state.locationHistory = locationHistory;
@@ -32,13 +32,30 @@ export default {
     state.endDateTime = endDateTime;
   },
   [types.SET_MAP_CENTER](state, center) {
-    state.map.center = center;
+    if (!state.map) {
+      state.map = { ...initialMapState };
+    }
+    
+    if (Array.isArray(center)) {
+      state.map.center = center;
+    } else if (center?.lat !== undefined && center?.lng !== undefined) {
+      state.map.center = [center.lat, center.lng];
+    } else {
+      console.warn('Invalid center format:', center);
+      state.map.center = [0, 0];
+    }
   },
   [types.SET_MAP_ZOOM](state, zoom) {
-    state.map.zoom = zoom;
+    if (!state.map) {
+      state.map = { ...initialMapState };
+    }
+    state.map.zoom = Number(zoom) || 13;
   },
   [types.SET_MAP_LAYER_VISIBILITY](state, { layer, visibility }) {
-    state.map.layers[layer] = visibility;
+    if (!state.map?.layers) {
+      state.map = { ...initialMapState };
+    }
+    Vue.set(state.map.layers, layer, Boolean(visibility));
   },
   [types.SET_DISTANCE_TRAVELLED](state, distanceTravelled) {
     state.distanceTravelled = distanceTravelled;

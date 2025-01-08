@@ -25,9 +25,29 @@ log("CONFIG", config);
 
 Vue.prototype.$config = config;
 
-new Vue({
-  i18n,
-  router,
-  store,
-  render: (h) => h(App),
-}).$mount("#app");
+Vue.config.errorHandler = function(err, vm, info) {
+  console.error('Vue Error:', err);
+  console.log('Component:', vm);
+  console.log('Error Info:', info);
+};
+
+Vue.config.warnHandler = function(msg, vm, trace) {
+  console.warn('Vue Warning:', msg);
+  console.log('Component:', vm);
+  console.log('Trace:', trace);
+};
+
+const initApp = () => {
+  new Vue({
+    i18n,
+    router,
+    store,
+    render: h => h(App)
+  }).$mount("#app");
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}

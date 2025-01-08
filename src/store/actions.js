@@ -14,17 +14,13 @@ import {
  * @param {QueryParams} query URL query parameters
  */
 const populateStateFromQuery = ({ state, commit }, query) => {
-  if (query.lat && !isNaN(parseFloat(query.lat))) {
-    commit(types.SET_MAP_CENTER, {
-      lat: query.lat,
-      lng: parseFloat(state.map.center.lng),
-    });
-  }
-  if (query.lng && !isNaN(parseFloat(query.lng))) {
-    commit(types.SET_MAP_CENTER, {
-      lat: parseFloat(state.map.center.lat),
-      lng: query.lng,
-    });
+  if (query.lat && query.lng && 
+      !isNaN(parseFloat(query.lat)) && 
+      !isNaN(parseFloat(query.lng))) {
+    commit(types.SET_MAP_CENTER, [
+      parseFloat(query.lat),
+      parseFloat(query.lng)
+    ]);
   }
   if (query.zoom && !isNaN(parseInt(query.zoom))) {
     commit(types.SET_MAP_ZOOM, parseInt(query.zoom));

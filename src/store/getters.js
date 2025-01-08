@@ -37,13 +37,18 @@ const filteredLocationHistory = (state) => {
  * @param {State} state
  * @returns {L.LatLng[]} All coordinates
  */
-const filteredLocationHistoryLatLngs = (state) => {
+const filteredLocationHistoryLatLngs = (state, getters) => {
   const latLngs = [];
-  const locationHistory = filteredLocationHistory(state);
-  Object.keys(locationHistory).forEach((user) => {
-    Object.keys(locationHistory[user]).forEach((device) => {
-      locationHistory[user][device].forEach((location) => {
-        latLngs.push(L.latLng(location.lat, location.lon));
+  if (!getters.filteredLocationHistory) {
+    return latLngs;
+  }
+  
+  Object.keys(getters.filteredLocationHistory).forEach((user) => {
+    Object.keys(getters.filteredLocationHistory[user]).forEach((device) => {
+      getters.filteredLocationHistory[user][device].forEach((location) => {
+        if (location && location.lat && location.lon) {
+          latLngs.push(L.latLng(location.lat, location.lon));
+        }
       });
     });
   });
@@ -58,13 +63,18 @@ const filteredLocationHistoryLatLngs = (state) => {
  * @param {State} state
  * @returns {L.LatLng[][]} Groups of coherent coordinates
  */
-const filteredLocationHistoryLatLngGroups = (state) => {
+const filteredLocationHistoryLatLngGroups = (state, getters) => {
   const groups = [];
-  const locationHistory = filteredLocationHistory(state);
-  Object.keys(locationHistory).forEach((user) => {
-    Object.keys(locationHistory[user]).forEach((device) => {
+  let currentGroup = [];
+  
+  if (!getters.filteredLocationHistory) {
+    return groups;
+  }
+
+  Object.keys(getters.filteredLocationHistory).forEach((user) => {
+    Object.keys(getters.filteredLocationHistory[user]).forEach((device) => {
       let latLngs = [];
-      locationHistory[user][device].forEach((location) => {
+      getters.filteredLocationHistory[user][device].forEach((location) => {
         const latLng = L.latLng(location.lat, location.lon);
         // Skip if group splitting is disabled or this is the first
         // coordinate in the current group
@@ -93,7 +103,68 @@ const filteredLocationHistoryLatLngGroups = (state) => {
 };
 
 export default {
-  filteredLocationHistory,
-  filteredLocationHistoryLatLngs,
-  filteredLocationHistoryLatLngGroups,
+  filteredLocationHistory: (state) => {
+    if (!state.locationHistory) {
+      console.warn('Location history is undefined');
+      return {};
+    }
+    return state.locationHistory;
+  },
+
+  filteredLocationHistoryLatLngs: (state, getters) => {
+    const latLngs = [];
+    if (!getters.filteredLocationHistory) {
+      return latLngs;
+    }
+    
+    Object.keys(getters.filteredLocationHistory).forEach((user) => {
+      Object.keys(getters.filteredLocationHistory[user]).forEach((device) => {
+        getters.filteredLocationHistory[user][device].forEach((location) => {
+          if (location && location.lat && location.lon) {
+            latLngs.push(L.latLng(location.lat, location.lon));
+          }
+        });
+      });
+    });
+    return latLngs;
+  },
+
+  filteredLocationHistoryLatLngGroups: (state, getters) => {
+    const groups = [];
+    let currentGroup = [];
+    
+    if (!getters.filteredLocationHistory) {
+      return groups;
+    }
+
+    Object.keys(getters.filteredLocationHistory).forEach((user) => {
+      Object.keys(getters.filteredLocationHistory[user]).forEach((device) => {
+        let latLngs = [];
+        getters.filteredLocationHistory[user][device].forEach((location) => {
+          const latLng = L.latLng(location.lat, location.lon);
+          // Skip if group splitting is disabled or this is the first
+          // coordinate in the current group
+          if (
+            typeof config.map.maxPointDistance === "number" &&
+            config.map.maxPointDistance > 0 &&
+            latLngs.length > 0
+          ) {
+            const lastLatLng = latLngs.slice(-1)[0];
+            if (
+              distanceBetweenCoordinates(lastLatLng, latLng) >
+              config.map.maxPointDistance
+            ) {
+              // Distance is too far, start new group of coordinate
+              groups.push(latLngs);
+              latLngs = [];
+            }
+          }
+          // Add coordinate to current active group
+          latLngs.push(latLng);
+        });
+        groups.push(latLngs);
+      });
+    });
+    return groups;
+  }
 };

@@ -89,22 +89,18 @@ export const getDevices = async (users) => {
  * @param {Device} [device] Get last location of specific device
  * @returns {Promise<OTLocation[]>} Array of last location objects
  */
-export const getLastLocations = async (user, device) => {
-  const params = {};
-  if (user) {
-    params["user"] = user;
-    if (device) {
-      params["device"] = device;
+export const getLastLocations = async (selectedUser, selectedDevice) => {
+  try {
+    const response = await fetch(`${config.api.baseUrl}/api/last`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error fetching last locations:', error);
+    return [];
   }
-  const response = await fetchApi("/api/0/last", params);
-  const json = await response.json();
-  const lastLocations = json;
-  log(
-    "API",
-    () => `[getLastLocations] Fetched ${lastLocations.length} last locations`
-  );
-  return lastLocations;
 };
 
 /**
@@ -161,32 +157,37 @@ export const getUserDeviceLocationHistory = async (
  * @param {Object} [fetchOptions] fetch() options
  * @returns {Promise<LocationHistory>} Location history
  */
-export const getLocationHistory = async (devices, start, end, fetchOptions) => {
-  const locationHistory = {};
-  await Promise.all(
-    Object.keys(devices).map(async (user) => {
-      locationHistory[user] = {};
-      await Promise.all(
-        devices[user].map(async (device) => {
-          locationHistory[user][device] = await getUserDeviceLocationHistory(
-            user,
-            device,
-            start,
-            end,
-            fetchOptions
-          );
-        })
-      );
-    })
-  );
-  log("API", () => {
-    const locationHistoryCount = getLocationHistoryCount(locationHistory);
-    return (
-      "[getLocationHistory] Fetched " +
-      `${locationHistoryCount} locations in total`
+export const getLocationHistory = async (devices, startDateTime, endDateTime, options = {}) => {
+  try {
+    const locationHistory = {};
+    await Promise.all(
+      Object.keys(devices).map(async (user) => {
+        locationHistory[user] = {};
+        await Promise.all(
+          devices[user].map(async (device) => {
+            locationHistory[user][device] = await getUserDeviceLocationHistory(
+              user,
+              device,
+              startDateTime,
+              endDateTime,
+              options
+            );
+          })
+        );
+      })
     );
-  });
-  return locationHistory;
+    log("API", () => {
+      const locationHistoryCount = getLocationHistoryCount(locationHistory);
+      return (
+        "[getLocationHistory] Fetched " +
+        `${locationHistoryCount} locations in total`
+      );
+    });
+    return locationHistory;
+  } catch (error) {
+    console.error('Error fetching location history:', error);
+    return {};
+  }
 };
 
 /**

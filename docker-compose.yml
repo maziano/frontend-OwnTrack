@@ -9,7 +9,7 @@ services:
       - "8080:80"
     environment:
       - SERVER_HOST=recorder
-      - SERVER_PORT=8083
+      - SERVER_PORT=8084
     volumes:
       - ./public/config/config.js:/usr/share/nginx/html/config/config.js
     depends_on:
@@ -30,9 +30,10 @@ services:
   recorder:
     image: owntracks/recorder:latest
     ports:
-      - "8083:8083"
+      - "8084:8083"
     environment:
       - OTR_HOST=mqtt
+      - OTR_GEOKEY=opencage:87ff6da9fff542079ae30a28a36a4ade
     volumes:
       - recorder-store:/store
     depends_on:

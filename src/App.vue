@@ -93,3 +93,15 @@ export default {
 <style lang="scss">
 @import "styles/main";
 </style>
+
+<style>
+#app {
+  height: 100vh;
+  width: 100vw;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+</style>
