@@ -1,0 +1,1 @@
+FROM owntracks/recorder:latest 

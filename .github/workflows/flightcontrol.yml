@@ -1,0 +1,13 @@
+name: FlightControl Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: flightcontrol-dev/action@v1
+        with:
+          api-key: ${{ secrets.FLIGHTCONTROL_API_KEY }} 

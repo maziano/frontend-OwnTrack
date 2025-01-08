@@ -1,0 +1,76 @@
+{
+  "environments": [
+    {
+      "id": "production",
+      "name": "Production",
+      "region": "us-east-1",
+      "services": [
+        {
+          "id": "frontend",
+          "name": "OwnTracks Frontend",
+          "type": "static",
+          "buildType": "docker",
+          "dockerfilePath": "./Dockerfile.custom",
+          "port": 80,
+          "envVariables": {
+            "SERVER_HOST": "${RECORDER_SERVICE_HOST}",
+            "SERVER_PORT": "8083"
+          }
+        },
+        {
+          "id": "recorder",
+          "name": "OwnTracks Recorder",
+          "type": "fargate",
+          "buildType": "docker",
+          "dockerfilePath": "./recorder/Dockerfile",
+          "cpu": 256,
+          "memory": 512,
+          "port": 8083,
+          "envVariables": {
+            "OTR_HOST": "${MQTT_SERVICE_HOST}",
+            "OTR_GEOKEY": "opencage:${OPENCAGE_API_KEY}"
+          },
+          "volumes": [
+            {
+              "name": "recorder-store",
+              "mountPath": "/store"
+            }
+          ]
+        },
+        {
+          "id": "mqtt",
+          "name": "MQTT Broker",
+          "type": "fargate",
+          "buildType": "docker",
+          "dockerfilePath": "./mqtt/Dockerfile",
+          "cpu": 256,
+          "memory": 512,
+          "ports": [
+            {
+              "container": 1883,
+              "public": 1883
+            },
+            {
+              "container": 9001,
+              "public": 9001
+            }
+          ],
+          "volumes": [
+            {
+              "name": "mqtt-config",
+              "mountPath": "/mosquitto/config"
+            },
+            {
+              "name": "mqtt-data",
+              "mountPath": "/mosquitto/data"
+            },
+            {
+              "name": "mqtt-log",
+              "mountPath": "/mosquitto/log"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+} 
